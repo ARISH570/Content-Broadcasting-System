@@ -35,10 +35,11 @@ const getActiveContentForTeacher = async (teacherId) => {
     for (const subject in subjectGroups) {
       const subjectContents = subjectGroups[subject].filter(c => {
         // Check time window
-        if (c.start_time && c.end_time) {
-          if (now < c.start_time || now > c.end_time) {
-            return false;
-          }
+        if (!c.start_time || !c.end_time) {
+          return false;
+        }
+        if (now < c.start_time || now > c.end_time) {
+          return false;
         }
         return true;
       });
@@ -60,14 +61,15 @@ const getActiveContentForTeacher = async (teacherId) => {
 
       // Calculate total cycle time
       const totalDuration = schedules.reduce((sum, s) => sum + s.duration, 0);
+      if (totalDuration <= 0) continue;
 
-      // Find start of current cycle
-      const cycleStart = new Date(now);
-      cycleStart.setMinutes(cycleStart.getMinutes() - (cycleStart.getMinutes() % totalDuration));
+      // Use absolute elapsed minutes from epoch to avoid hour-boundary reset
+      const elapsedMinutes = Math.floor(now.getTime() / (1000 * 60));
+      const cyclePosition = elapsedMinutes % totalDuration;
 
       let elapsed = 0;
       for (const schedule of schedules) {
-        if (elapsed + schedule.duration > (now - cycleStart) / (1000 * 60)) {
+        if (elapsed + schedule.duration > cyclePosition) {
           // This is the active one
           const activeContent = subjectContents.find(c => c.id === schedule.content_id);
           if (activeContent) {

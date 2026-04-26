@@ -1,50 +1,50 @@
-# Content Broadcasting System - Features Implementation Mapping
+ Content Broadcasting System - Features Implementation Mapping
 
-## Overview
+ Overview
 This document maps all implemented features against the Technical Assignment requirements for the Content Broadcasting System backend project.
 
 ---
 
-## ✅ CORE REQUIREMENTS - ALL IMPLEMENTED
+ ✅ CORE REQUIREMENTS - ALL IMPLEMENTED
 
-### 1. Technology Stack
+ 1. Technology Stack
 | Requirement | Status | Location |
 |---|---|---|
-| **Backend**: Node.js | ✅ Implemented | `package.json`, `server.js` |
-| **Framework**: Express.js | ✅ Implemented | `src/app.js`, all routes |
-| **Database**: MySQL | ✅ Implemented | `src/config/db.js` |
-| **ORM**: Sequelize | ✅ Implemented | `src/models/` |
-| **JWT Authentication** | ✅ Implemented | `src/middlewares/authMiddleware.js` |
-| **Password Hashing**: bcrypt | ✅ Implemented | `src/controllers/authController.js` |
+| Backend: Node.js | ✅ Implemented | `package.json`, `server.js` |
+| Framework: Express.js | ✅ Implemented | `src/app.js`, all routes |
+| Database: MySQL | ✅ Implemented | `src/config/db.js` |
+| ORM: Sequelize | ✅ Implemented | `src/models/` |
+| JWT Authentication | ✅ Implemented | `src/middlewares/authMiddleware.js` |
+| Password Hashing: bcrypt | ✅ Implemented | `src/controllers/authController.js` |
 
 ---
 
-## ✅ AUTHENTICATION & RBAC (Module 1)
+ ✅ AUTHENTICATION & RBAC (Module 1)
 
 | Feature | Status | Implementation Details |
 |---|---|---|
-| **JWT-based Authentication** | ✅ | `src/middlewares/authMiddleware.js` - verifyToken middleware |
-| **Token Generation** | ✅ | `src/controllers/authController.js` - login endpoint generates JWT with 1-hour expiry |
-| **Token Verification** | ✅ | `src/middlewares/authMiddleware.js` - validates token on protected routes |
-| **Role-based Access Control** | ✅ | `src/middlewares/roleMiddleware.js` - checkRole middleware enforces role separation |
-| **Principal Role** | ✅ | Can view all content, approve, reject, view pending content |
-| **Teacher Role** | ✅ | Can upload content, view their own content status |
-| **Role Separation** | ✅ | Endpoints protected with checkRole('principal') or checkRole('teacher') |
-| **User Registration** | ✅ | `POST /api/auth/register` - with role validation |
-| **User Login** | ✅ | `POST /api/auth/login` - returns JWT token |
+| JWT-based Authentication | ✅ | `src/middlewares/authMiddleware.js` - verifyToken middleware |
+| Token Generation | ✅ | `src/controllers/authController.js` - login endpoint generates JWT with 1-hour expiry |
+| Token Verification | ✅ | `src/middlewares/authMiddleware.js` - validates token on protected routes |
+| Role-based Access Control | ✅ | `src/middlewares/roleMiddleware.js` - checkRole middleware enforces role separation |
+| Principal Role | ✅ | Can view all content, approve, reject, view pending content |
+| Teacher Role | ✅ | Can upload content, view their own content status |
+| Role Separation | ✅ | Endpoints protected with checkRole('principal') or checkRole('teacher') |
+| User Registration | ✅ | `POST /api/auth/register` - with role validation |
+| User Login | ✅ | `POST /api/auth/login` - returns JWT token |
 
-**Route Protection Examples:**
+Route Protection Examples:
 - `/api/content/upload` - Protected with `verifyToken` + `checkRole('teacher')`
 - `/api/content/pending` - Protected with `verifyToken` + `checkRole('principal')`
 - `/api/content/:id/approve` - Protected with `verifyToken` + `checkRole('principal')`
 
 ---
 
-## ✅ DATABASE DESIGN (Module 2)
+ ✅ DATABASE DESIGN (Module 2)
 
-### Tables Implemented
+ Tables Implemented
 
-#### **Users Table**
+ Users Table
 | Field | Type | Implemented |
 |---|---|---|
 | id | INTEGER PRIMARY KEY | ✅ |
@@ -54,9 +54,9 @@ This document maps all implemented features against the Technical Assignment req
 | role | ENUM('principal', 'teacher') | ✅ |
 | created_at | DATETIME | ✅ |
 
-**Location**: `src/models/User.js`
+Location: `src/models/User.js`
 
-#### **Contents Table**
+ Contents Table
 | Field | Type | Implemented |
 |---|---|---|
 | id | INTEGER PRIMARY KEY | ✅ |
@@ -76,19 +76,19 @@ This document maps all implemented features against the Technical Assignment req
 | rotation_duration | INTEGER (minutes) | ✅ |
 | created_at | DATETIME | ✅ |
 
-**Location**: `src/models/Content.js`
+Location: `src/models/Content.js`
 
-#### **ContentSlots Table (Subject-based)**
+ ContentSlots Table (Subject-based)
 | Field | Type | Implemented |
 |---|---|---|
 | id | INTEGER PRIMARY KEY | ✅ |
 | subject | STRING | ✅ |
 | created_at | DATETIME | ✅ |
 
-**Purpose**: Groups content by subject for independent rotation cycles
-**Location**: `src/models/ContentSlot.js`
+Purpose: Groups content by subject for independent rotation cycles
+Location: `src/models/ContentSlot.js`
 
-#### **ContentSchedules Table (Rotation Order)**
+ ContentSchedules Table (Rotation Order)
 | Field | Type | Implemented |
 |---|---|---|
 | id | INTEGER PRIMARY KEY | ✅ |
@@ -98,126 +98,126 @@ This document maps all implemented features against the Technical Assignment req
 | duration | INTEGER (minutes) | ✅ |
 | created_at | DATETIME | ✅ |
 
-**Purpose**: Defines rotation order and duration for content within a subject slot
-**Location**: `src/models/ContentSchedule.js`
+Purpose: Defines rotation order and duration for content within a subject slot
+Location: `src/models/ContentSchedule.js`
 
-### Model Associations
+ Model Associations
 ```
 User (1) ← HasMany → (N) Content (uploaded_by)
 User (1) ← HasMany → (N) Content (approved_by)
 ContentSlot (1) ← HasMany → (N) ContentSchedule
 Content (1) ← HasMany → (N) ContentSchedule
 ```
-**Location**: `src/models/index.js`
+Location: `src/models/index.js`
 
 ---
 
-## ✅ USER FLOWS (Module 3)
+ ✅ USER FLOWS (Module 3)
 
-### Principal Flow
+ Principal Flow
 | Action | Endpoint | Method | Status | Location |
 |---|---|---|---|---|
-| **Login** | `/api/auth/login` | POST | ✅ | `src/controllers/authController.js` |
-| **View All Content** | `/api/content/` | GET | ✅ | `src/controllers/contentController.js` - getAllContent |
-| **View Pending Content** | `/api/content/pending` | GET | ✅ | `src/controllers/contentController.js` - getPendingContent |
-| **Approve Content** | `/api/content/:id/approve` | PUT | ✅ | `src/controllers/contentController.js` - approveContent |
-| **Reject Content** | `/api/content/:id/reject` | PUT | ✅ | `src/controllers/contentController.js` - rejectContent |
+| Login | `/api/auth/login` | POST | ✅ | `src/controllers/authController.js` |
+| View All Content | `/api/content/` | GET | ✅ | `src/controllers/contentController.js` - getAllContent |
+| View Pending Content | `/api/content/pending` | GET | ✅ | `src/controllers/contentController.js` - getPendingContent |
+| Approve Content | `/api/content/:id/approve` | PUT | ✅ | `src/controllers/contentController.js` - approveContent |
+| Reject Content | `/api/content/:id/reject` | PUT | ✅ | `src/controllers/contentController.js` - rejectContent |
 
-### Teacher Flow
+ Teacher Flow
 | Action | Endpoint | Method | Status | Location |
 |---|---|---|---|---|
-| **Login** | `/api/auth/login` | POST | ✅ | `src/controllers/authController.js` |
-| **Upload Content** | `/api/content/upload` | POST | ✅ | `src/controllers/contentController.js` - uploadContent |
-| **View Own Content** | `/api/content/my` | GET | ✅ | `src/controllers/contentController.js` - getTeacherContent |
+| Login | `/api/auth/login` | POST | ✅ | `src/controllers/authController.js` |
+| Upload Content | `/api/content/upload` | POST | ✅ | `src/controllers/contentController.js` - uploadContent |
+| View Own Content | `/api/content/my` | GET | ✅ | `src/controllers/contentController.js` - getTeacherContent |
 
-### Student Flow (Public)
+ Student Flow (Public)
 | Action | Endpoint | Method | Status | Location |
 |---|---|---|---|---|
-| **Get Live Content** | `/api/live/:teacherId` | GET | ✅ | `src/controllers/publicController.js` - getLiveContent |
+| Get Live Content | `/api/live/:teacherId` | GET | ✅ | `src/controllers/publicController.js` - getLiveContent |
 
 ---
 
-## ✅ CONTENT LIFECYCLE (Module 4)
+ ✅ CONTENT LIFECYCLE (Module 4)
 
 | Stage | Description | Implemented | Details |
 |---|---|---|---|
-| **Uploaded** | Content initially created by teacher | ✅ | Default status in Content.uploadContent |
-| **Pending** | Awaiting principal approval | ✅ | Automatically set to 'pending' on upload |
-| **Approved** | Principal approves content | ✅ | Status changed to 'approved', approved_by and approved_at set |
-| **Rejected** | Principal rejects with reason | ✅ | Status changed to 'rejected', rejection_reason stored |
-| **Broadcasting** | Approved content broadcast if scheduled | ✅ | Determined by scheduling logic |
+| Uploaded | Content initially created by teacher | ✅ | Default status in Content.uploadContent |
+| Pending | Awaiting principal approval | ✅ | Automatically set to 'pending' on upload |
+| Approved | Principal approves content | ✅ | Status changed to 'approved', approved_by and approved_at set |
+| Rejected | Principal rejects with reason | ✅ | Status changed to 'rejected', rejection_reason stored |
+| Broadcasting | Approved content broadcast if scheduled | ✅ | Determined by scheduling logic |
 
-**Status Validation**:
+Status Validation:
 - Only 'approved' content is broadcast
 - Rejection reason is required for rejection
 - Status field is ENUM to prevent invalid values
 
 ---
 
-## ✅ CONTENT UPLOAD SYSTEM (Module 5)
+ ✅ CONTENT UPLOAD SYSTEM (Module 5)
 
-### File Upload Features
+ File Upload Features
 | Feature | Requirement | Implemented | Details |
 |---|---|---|---|
-| **Supported Formats** | JPG, PNG, GIF | ✅ | Validated via MIME types |
-| **File Size Limit** | Max 10MB | ✅ | Checked before saving |
-| **File Storage** | Local disk storage | ✅ | Saved to `/uploads/` directory |
-| **File Naming** | Unique names | ✅ | Using timestamp: `${Date.now()}-${filename}` |
-| **File Metadata** | Stored in DB | ✅ | file_type, file_size, file_url saved |
+| Supported Formats | JPG, PNG, GIF | ✅ | Validated via MIME types |
+| File Size Limit | Max 10MB | ✅ | Checked before saving |
+| File Storage | Local disk storage | ✅ | Saved to `/uploads/` directory |
+| File Naming | Unique names | ✅ | Using timestamp: `${Date.now()}-${filename}` |
+| File Metadata | Stored in DB | ✅ | file_type, file_size, file_url saved |
 
-### Required Fields
+ Required Fields
 | Field | Validated | Location |
 |---|---|---|
-| **Title** | ✅ Yes | `src/controllers/contentController.js` |
-| **File** | ✅ Yes | `src/controllers/contentController.js` |
-| **Subject** | ✅ Yes | `src/controllers/contentController.js` |
+| Title | ✅ Yes | `src/controllers/contentController.js` |
+| File | ✅ Yes | `src/controllers/contentController.js` |
+| Subject | ✅ Yes | `src/controllers/contentController.js` |
 
-### Optional Fields
+ Optional Fields
 | Field | Implemented |
 |---|---|
-| **Description** | ✅ |
-| **Start Time** | ✅ |
-| **End Time** | ✅ |
-| **Rotation Duration** | ✅ |
+| Description | ✅ |
+| Start Time | ✅ |
+| End Time | ✅ |
+| Rotation Duration | ✅ |
 
-**Upload Endpoint**: `POST /api/content/upload`
-**Upload Handler**: `src/controllers/contentController.js` - uploadContent
-**Multer Setup**: `src/routes/contentRoutes.js` - uses memory storage
+Upload Endpoint: `POST /api/content/upload`
+Upload Handler: `src/controllers/contentController.js` - uploadContent
+Multer Setup: `src/routes/contentRoutes.js` - uses memory storage
 
 ---
 
-## ✅ APPROVAL WORKFLOW (Module 6)
+ ✅ APPROVAL WORKFLOW (Module 6)
 
 | Step | Status | Implementation |
 |---|---|---|
-| **Only Principal Can Approve** | ✅ | Protected with `checkRole('principal')` middleware |
-| **Only Principal Can Reject** | ✅ | Protected with `checkRole('principal')` middleware |
-| **Rejection Reason Required** | ✅ | Validated before status change |
-| **Approval Timestamp** | ✅ | `approved_at` field set when approved |
-| **Approver Tracking** | ✅ | `approved_by` field tracks which principal approved |
-| **Teacher Cannot Approve** | ✅ | Role check prevents teacher access |
+| Only Principal Can Approve | ✅ | Protected with `checkRole('principal')` middleware |
+| Only Principal Can Reject | ✅ | Protected with `checkRole('principal')` middleware |
+| Rejection Reason Required | ✅ | Validated before status change |
+| Approval Timestamp | ✅ | `approved_at` field set when approved |
+| Approver Tracking | ✅ | `approved_by` field tracks which principal approved |
+| Teacher Cannot Approve | ✅ | Role check prevents teacher access |
 
-**Approval Endpoint**: `PUT /api/content/:id/approve`
-**Rejection Endpoint**: `PUT /api/content/:id/reject`
-**Location**: `src/controllers/contentController.js`
+Approval Endpoint: `PUT /api/content/:id/approve`
+Rejection Endpoint: `PUT /api/content/:id/reject`
+Location: `src/controllers/contentController.js`
 
 ---
 
-## ✅ SCHEDULING & ROTATION LOGIC (CRITICAL - Module 7)
+ ✅ SCHEDULING & ROTATION LOGIC (CRITICAL - Module 7)
 
-### Architecture
-**File**: `src/services/schedulingService.js`
+ Architecture
+File: `src/services/schedulingService.js`
 
-### Key Features
+ Key Features
 
-#### 1. **Time Window Validation**
+ 1. Time Window Validation
 ```javascript
 - Content must have start_time and end_time to be active
 - If current time is outside window → content is not shown
 - Enables teacher control over when content is broadcast
 ```
 
-#### 2. **Subject-based Grouping**
+ 2. Subject-based Grouping
 ```javascript
 - Contents grouped by subject
 - Each subject has independent rotation cycle
@@ -227,7 +227,7 @@ Content (1) ← HasMany → (N) ContentSchedule
   - Science: Content X → Y → X (3 min each)
 ```
 
-#### 3. **Rotation Duration Logic**
+ 3. Rotation Duration Logic
 ```javascript
 - Each content has rotation_duration (in minutes)
 - Contents stored in rotation_order
@@ -235,7 +235,7 @@ Content (1) ← HasMany → (N) ContentSchedule
 - System calculates which content is active at current time
 ```
 
-#### 4. **Active Content Calculation**
+ 4. Active Content Calculation
 ```javascript
 Algorithm:
 1. Find all approved content for teacher
@@ -249,7 +249,7 @@ Algorithm:
    f. Return content matching current time slot
 ```
 
-#### 5. **Edge Case Handling**
+ 5. Edge Case Handling
 ```javascript
 ✅ No content available → returns null
 ✅ Approved but not scheduled → not returned
@@ -257,11 +257,11 @@ Algorithm:
 ✅ No matching teacher → empty response
 ```
 
-**Function**: `getActiveContentForTeacher(teacherId)`
-**Returns**: Active content object or null
-**Called by**: `src/controllers/publicController.js`
+Function: `getActiveContentForTeacher(teacherId)`
+Returns: Active content object or null
+Called by: `src/controllers/publicController.js`
 
-### Example Scenario
+ Example Scenario
 ```
 Teacher uploads:
 - Maths Content A (rotation: 5 min, start: 10:00, end: 11:00)
@@ -277,24 +277,24 @@ At 11:01: No content (outside window)
 
 ---
 
-## ✅ PUBLIC BROADCASTING API (Module 8)
+ ✅ PUBLIC BROADCASTING API (Module 8)
 
 | Feature | Status | Implementation |
 |---|---|---|
-| **Public Endpoint** | ✅ | `/api/live/:teacherId` - No auth required |
-| **Teacher Filtering** | ✅ | Only returns content from specified teacher |
-| **Status Filtering** | ✅ | Only returns approved content |
-| **Subject-based Rotation** | ✅ | Applies scheduling logic per subject |
-| **Active Content Only** | ✅ | Respects time windows and rotation |
-| **Edge Case: No Content** | ✅ | Returns `{ message: "No content available" }` |
+| Public Endpoint | ✅ | `/api/live/:teacherId` - No auth required |
+| Teacher Filtering | ✅ | Only returns content from specified teacher |
+| Status Filtering | ✅ | Only returns approved content |
+| Subject-based Rotation | ✅ | Applies scheduling logic per subject |
+| Active Content Only | ✅ | Respects time windows and rotation |
+| Edge Case: No Content | ✅ | Returns `{ message: "No content available" }` |
 
-**Endpoint**: `GET /api/live/:teacherId`
-**Handler**: `src/controllers/publicController.js` - getLiveContent
-**Logic**: Uses `schedulingService.getActiveContentForTeacher()`
+Endpoint: `GET /api/live/:teacherId`
+Handler: `src/controllers/publicController.js` - getLiveContent
+Logic: Uses `schedulingService.getActiveContentForTeacher()`
 
 ---
 
-## ✅ FOLDER STRUCTURE (Module 9)
+ ✅ FOLDER STRUCTURE (Module 9)
 
 ```
 Content Broadcasting System/
@@ -331,11 +331,11 @@ Content Broadcasting System/
 └── architecture-notes.txt     ✅ Architecture docs
 ```
 
-**Status**: All required folders and files implemented
+Status: All required folders and files implemented
 
 ---
 
-## ✅ MIDDLEWARE USAGE (Module 10)
+ ✅ MIDDLEWARE USAGE (Module 10)
 
 | Middleware | Purpose | Location | Usage |
 |---|---|---|---|
@@ -346,66 +346,66 @@ Content Broadcasting System/
 
 ---
 
-## ✅ ERROR HANDLING & VALIDATION (Module 11)
+ ✅ ERROR HANDLING & VALIDATION (Module 11)
 
 | Validation | Location | Status |
 |---|---|---|
-| **Email Uniqueness** | authController.js | ✅ |
-| **Password Requirements** | authController.js | ✅ (Uses bcrypt) |
-| **Role Validation** | authController.js | ✅ |
-| **File Type Validation** | contentController.js | ✅ |
-| **File Size Validation** | contentController.js | ✅ |
-| **Required Fields** | contentController.js | ✅ |
-| **JWT Validation** | authMiddleware.js | ✅ |
-| **Invalid Teacher ID** | publicController.js | ✅ |
+| Email Uniqueness | authController.js | ✅ |
+| Password Requirements | authController.js | ✅ (Uses bcrypt) |
+| Role Validation | authController.js | ✅ |
+| File Type Validation | contentController.js | ✅ |
+| File Size Validation | contentController.js | ✅ |
+| Required Fields | contentController.js | ✅ |
+| JWT Validation | authMiddleware.js | ✅ |
+| Invalid Teacher ID | publicController.js | ✅ |
 
 ---
 
-## ✅ SECURITY FEATURES (Module 12)
+ ✅ SECURITY FEATURES (Module 12)
 
 | Feature | Implementation | Location |
 |---|---|---|
-| **Password Hashing** | bcrypt with salt rounds 10 | authController.js |
-| **JWT Tokens** | Signed with JWT_SECRET, 1h expiry | authController.js |
-| **Protected Routes** | All teacher/principal routes require token | middlewares/ |
-| **Role Enforcement** | checkRole middleware validates permissions | roleMiddleware.js |
-| **Sensitive Data** | No passwords exposed in responses | authController.js |
-| **Input Validation** | All inputs validated before processing | controllers/ |
-| **SQL Injection** | ORM (Sequelize) prevents SQL injection | models/ |
+| Password Hashing | bcrypt with salt rounds 10 | authController.js |
+| JWT Tokens | Signed with JWT_SECRET, 1h expiry | authController.js |
+| Protected Routes | All teacher/principal routes require token | middlewares/ |
+| Role Enforcement | checkRole middleware validates permissions | roleMiddleware.js |
+| Sensitive Data | No passwords exposed in responses | authController.js |
+| Input Validation | All inputs validated before processing | controllers/ |
+| SQL Injection | ORM (Sequelize) prevents SQL injection | models/ |
 
 ---
 
-## ✅ TESTING (Module 13)
+ ✅ TESTING (Module 13)
 
 | Test Coverage | Status | Location |
 |---|---|---|
-| **Unit Tests** | ✅ Implemented | `tests/auth.test.js` |
-| **Auth Tests** | ✅ Registration, Login, Validation | `tests/auth.test.js` |
-| **Test Framework** | Jest + Supertest | `package.json` |
-| **Test Script** | `npm test` | `package.json` |
-| **Database Reset** | Database synced with force: true per test | `tests/auth.test.js` |
+| Unit Tests | ✅ Implemented | `tests/auth.test.js` |
+| Auth Tests | ✅ Registration, Login, Validation | `tests/auth.test.js` |
+| Test Framework | Jest + Supertest | `package.json` |
+| Test Script | `npm test` | `package.json` |
+| Database Reset | Database synced with force: true per test | `tests/auth.test.js` |
 
-**Test Results**: ✅ All 3 tests passing
+Test Results: ✅ All 3 tests passing
 
 ---
 
-## ✅ ARCHITECTURE & SCALABILITY (Module 14)
+ ✅ ARCHITECTURE & SCALABILITY (Module 14)
 
 | Aspect | Approach | Details |
 |---|---|---|
-| **Separation of Concerns** | Controllers, Services, Models | Clear layer separation |
-| **Database Indexing** | Sequelize ORM | Foreign keys on relationships |
-| **Stateless Auth** | JWT tokens | No server-side session storage |
-| **Error Handling** | Try-catch blocks | Comprehensive error messages |
-| **File Storage** | Local disk initially | Upgradeable to S3 (bonus feature) |
-| **Scalability** | Modular structure | Easy to add new routes/models |
-| **Future Caching** | Ready for Redis | scheduling service can be cached |
+| Separation of Concerns | Controllers, Services, Models | Clear layer separation |
+| Database Indexing | Sequelize ORM | Foreign keys on relationships |
+| Stateless Auth | JWT tokens | No server-side session storage |
+| Error Handling | Try-catch blocks | Comprehensive error messages |
+| File Storage | Local disk initially | Upgradeable to S3 (bonus feature) |
+| Scalability | Modular structure | Easy to add new routes/models |
+| Future Caching | Ready for Redis | scheduling service can be cached |
 
 ---
 
-## ✅ API DOCUMENTATION (Module 15)
+ ✅ API DOCUMENTATION (Module 15)
 
-**Location**: `README.md`
+Location: `README.md`
 
 Includes:
 - Setup instructions
@@ -417,27 +417,27 @@ Includes:
 
 ---
 
-## ✅ EDGE CASE HANDLING (CRITICAL - Module 16)
+ ✅ EDGE CASE HANDLING (CRITICAL - Module 16)
 
 | Edge Case | Requirement | Implemented | Details |
 |---|---|---|---|
-| **No Content Available** | Return "No content available" | ✅ | When no approved content for teacher |
-| **Approved But Not Scheduled** | Don't broadcast | ✅ | If no start_time/end_time |
-| **Outside Time Window** | Don't broadcast | ✅ | Current time outside start/end |
-| **Invalid Subject** | Return empty response | ✅ | Subject filtering works correctly |
-| **No Matching Teacher** | Return "No content available" | ✅ | When teacher ID has no content |
-| **Duplicate Email** | Reject registration | ✅ | findOne check prevents duplicates |
-| **Invalid Role** | Reject during registration | ✅ | Only 'principal' or 'teacher' allowed |
-| **Invalid File Type** | Reject upload | ✅ | Only JPG, PNG, GIF accepted |
-| **Oversized File** | Reject upload | ✅ | Max 10MB enforced |
-| **Missing Required Fields** | Reject with error | ✅ | Title, subject, file required |
-| **Invalid Teacher ID** | Return error | ✅ | Validated as number in public controller |
+| No Content Available | Return "No content available" | ✅ | When no approved content for teacher |
+| Approved But Not Scheduled | Don't broadcast | ✅ | If no start_time/end_time |
+| Outside Time Window | Don't broadcast | ✅ | Current time outside start/end |
+| Invalid Subject | Return empty response | ✅ | Subject filtering works correctly |
+| No Matching Teacher | Return "No content available" | ✅ | When teacher ID has no content |
+| Duplicate Email | Reject registration | ✅ | findOne check prevents duplicates |
+| Invalid Role | Reject during registration | ✅ | Only 'principal' or 'teacher' allowed |
+| Invalid File Type | Reject upload | ✅ | Only JPG, PNG, GIF accepted |
+| Oversized File | Reject upload | ✅ | Max 10MB enforced |
+| Missing Required Fields | Reject with error | ✅ | Title, subject, file required |
+| Invalid Teacher ID | Return error | ✅ | Validated as number in public controller |
 
 ---
 
-## 📊 FEATURE COMPLETENESS SUMMARY
+ 📊 FEATURE COMPLETENESS SUMMARY
 
-### Core Features
+ Core Features
 - ✅ Authentication & JWT (100%)
 - ✅ RBAC (Principal/Teacher) (100%)
 - ✅ User Registration & Login (100%)
@@ -455,7 +455,7 @@ Includes:
 - ✅ Code Structure (100%)
 - ✅ Testing Setup (100%)
 
-### Optional/Bonus Features (Not Implemented)
+ Optional/Bonus Features (Not Implemented)
 - ❌ Redis Caching
 - ❌ Rate Limiting
 - ❌ S3 Upload
@@ -464,11 +464,11 @@ Includes:
 - ❌ Swagger API Documentation
 - ❌ Deployment Link
 
-**Overall Implementation**: **100% of core requirements** ✅
+Overall Implementation: 100% of core requirements ✅
 
 ---
 
-## 🚀 DEPLOYMENT READY
+ 🚀 DEPLOYMENT READY
 
 All critical features for production are implemented:
 - ✅ Clean code structure
@@ -481,4 +481,5 @@ All critical features for production are implemented:
 - ✅ Testing framework
 - ✅ Architecture documentation
 
-**Status**: Ready for submission and evaluation
+Status: Ready for submission and evaluation
+

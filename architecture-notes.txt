@@ -1,0 +1,66 @@
+Architecture Notes for Content Broadcasting System
+===============================================
+
+Authentication & RBAC Flow
+- JWT-based authentication for all protected routes
+- Roles: principal and teacher
+- Principal: Can view all content, approve/reject pending content
+- Teacher: Can upload content, view their own content status
+- Middleware: verifyToken for auth, checkRole for role-based access
+
+Subject-based System Design
+- Content is grouped by subject (e.g., Maths, Science)
+- Each subject has its own ContentSlot for scheduling
+- Broadcasting is subject-specific with independent rotation cycles
+- Public API filters content by teacher and applies subject-based logic
+
+Upload Handling Approach
+- Multer for file upload with memory storage
+- Validation: File type (JPG, PNG, GIF), size limit (10MB)
+- Files stored locally in /uploads directory
+- File metadata saved in database (URL, type, size)
+
+Approval Workflow Design
+- Content status: uploaded -> pending -> approved/rejected
+- Only principal can approve/reject
+- Rejection requires reason
+- Approved content becomes eligible for broadcasting
+
+Scheduling/Rotation Logic (VERY IMPORTANT)
+- Content must have start_time and end_time to be active
+- Within time window, content participates in rotation
+- Each subject has independent rotation cycle
+- Rotation based on duration (minutes) per content
+- Cycle repeats continuously
+- Active content determined by current time modulo total cycle duration
+- Example: Maths content A (5min) -> B (5min) -> C (5min) -> repeat
+
+Database Design Decisions
+- MySQL with Sequelize ORM
+- Tables: Users, Contents, ContentSlots, ContentSchedules
+- Foreign keys for relationships
+- Indexes on frequently queried fields (status, subject, uploaded_by)
+- ENUM for status and roles for data integrity
+
+Folder Structure
+- src/controllers: Business logic for auth, content, public APIs
+- src/models: Sequelize models with associations
+- src/routes: Route definitions with middleware
+- src/middlewares: JWT verification, role checking
+- src/services: Scheduling logic
+- src/config: Database configuration
+- uploads/: Local file storage
+
+Middleware Usage
+- express.json(): Parse JSON bodies
+- verifyToken: JWT authentication
+- checkRole: Role-based access control
+- express.static: Serve uploaded files
+
+Scalability Approach
+- Database indexing for performance
+- Local file storage (can be upgraded to S3)
+- Stateless JWT authentication
+- Separation of concerns with services layer
+- Potential for Redis caching on public API
+- Modular structure for easy extension

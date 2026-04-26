@@ -7,7 +7,7 @@ const publicRoutes = require('./routes/publicRoutes');
 const app = express();
 
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/', (req, res) => {
     res.send('Content Broadcasting System API');

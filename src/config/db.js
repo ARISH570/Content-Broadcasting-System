@@ -1,14 +1,61 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASS,
-  {
-    host: process.env.DB_HOST,
+const dbMode = (process.env.DB_MODE || 'auto').toLowerCase();
+const railwayPublicUrl = process.env.MYSQL_PUBLIC_URL;
+const railwayPrivateUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
+const databaseUrl =
+  dbMode === 'railway'
+    ? railwayPublicUrl || railwayPrivateUrl
+    : railwayPrivateUrl || railwayPublicUrl;
+const localConfig = {
+  database: process.env.DB_NAME,
+  username: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT || 3306),
+};
+const railwayConfig = {
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME,
+  username: process.env.MYSQLUSER || process.env.DB_USER,
+  password: process.env.MYSQLPASSWORD || process.env.DB_PASS,
+  host: process.env.MYSQLHOST || process.env.DB_HOST,
+  port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
+};
+
+let sequelize;
+
+if (dbMode === 'railway') {
+  sequelize = databaseUrl
+    ? new Sequelize(databaseUrl, {
+        dialect: 'mysql',
+        logging: false,
+      })
+    : new Sequelize(railwayConfig.database, railwayConfig.username, railwayConfig.password, {
+        host: railwayConfig.host,
+        port: railwayConfig.port,
+        dialect: 'mysql',
+        logging: false,
+      });
+} else if (dbMode === 'local') {
+  sequelize = new Sequelize(localConfig.database, localConfig.username, localConfig.password, {
+    host: localConfig.host,
+    port: localConfig.port,
     dialect: 'mysql',
-  }
-);
+    logging: false,
+  });
+} else {
+  sequelize = databaseUrl
+    ? new Sequelize(databaseUrl, {
+        dialect: 'mysql',
+        logging: false,
+      })
+    : new Sequelize(railwayConfig.database, railwayConfig.username, railwayConfig.password, {
+        host: railwayConfig.host,
+        port: railwayConfig.port,
+        dialect: 'mysql',
+        logging: false,
+      });
+}
 
 module.exports = sequelize;

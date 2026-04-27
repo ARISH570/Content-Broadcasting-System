@@ -30,15 +30,39 @@ A backend service for educational content broadcasting with teacher upload flow,
 
 3. Configure environment variables in `.env`:
    ```env
+   JWT_SECRET=your_jwt_secret_key
+   DB_MODE=local
+
+   # Local MySQL
    DB_HOST=localhost
+   DB_PORT=3306
    DB_USER=root
    DB_PASS=yourpassword
    DB_NAME=content_broadcasting
-   JWT_SECRET=your_jwt_secret_key
    ```
 
 4. Create MySQL database:
    - `content_broadcasting`
+
+   If you deploy on Railway with a Railway MySQL service, the app now also supports Railway's injected variables:
+   ```env
+   DB_MODE=railway
+   MYSQL_PUBLIC_URL=
+   MYSQL_URL=
+   MYSQLHOST=
+   MYSQLPORT=
+   MYSQLUSER=
+   MYSQLPASSWORD=
+   MYSQLDATABASE=
+   ```
+   For apps hosted outside Railway, such as Render, use `MYSQL_PUBLIC_URL`.
+   For apps hosted inside Railway, `MYSQL_URL` works over Railway's private network.
+   ```env
+   DB_MODE=railway
+   MYSQL_PUBLIC_URL=
+   ```
+   Use `DB_MODE=local` for your laptop, `DB_MODE=railway` on Railway, or leave it unset to use auto-detection.
+   In Render, set `DB_MODE=railway`, `JWT_SECRET`, and `MYSQL_PUBLIC_URL`.
 
 5. Start the server:
    ```bash

@@ -1,66 +1,65 @@
 Architecture Notes for Content Broadcasting System
-===============================================
+=================================================
 
-Authentication & RBAC Flow
-- JWT-based authentication for all protected routes
-- Roles: principal and teacher
-- Principal: Can view all content, approve/reject pending content
-- Teacher: Can upload content, view their own content status
-- Middleware: verifyToken for auth, checkRole for role-based access
+Authentication and RBAC
+- JWT-based authentication protects teacher and principal routes.
+- Roles supported: `teacher` and `principal`.
+- `verifyToken` handles authentication.
+- `checkRole` enforces role-based access.
 
-Subject-based System Design
-- Content is grouped by subject (e.g., Maths, Science)
-- Each subject has its own ContentSlot for scheduling
-- Broadcasting is subject-specific with independent rotation cycles
-- Public API filters content by teacher and applies subject-based logic
+Content and Scheduling Model
+- Content is grouped by subject such as Maths or Science.
+- Each subject uses its own `ContentSlot`.
+- Rotation is subject-specific and time-window aware.
+- The public API returns active approved content for a teacher.
 
-Upload Handling Approach
-- Multer for file upload with memory storage
-- Validation: File type (JPG, PNG, GIF), size limit (10MB)
-- Files stored locally in /uploads directory
-- File metadata saved in database (URL, type, size)
+Upload Design
+- Multer handles uploads.
+- Allowed file types: JPG, PNG, GIF.
+- Max file size: 10MB.
+- File metadata is stored in MySQL through Sequelize.
 
-Approval Workflow Design
-- Content status: uploaded -> pending -> approved/rejected
-- Only principal can approve/reject
-- Rejection requires reason
-- Approved content becomes eligible for broadcasting
+Approval Workflow
+- Content moves through `uploaded -> pending -> approved/rejected`.
+- Only principals can approve or reject content.
+- Rejection requires a reason.
+- Only approved content can become live.
 
-Scheduling/Rotation Logic (VERY IMPORTANT)
-- Content must have start_time and end_time to be active
-- Within time window, content participates in rotation
-- Each subject has independent rotation cycle
-- Rotation based on duration (minutes) per content
-- Cycle repeats continuously
-- Active content determined by current time modulo total cycle duration
-- Example: Maths content A (5min) -> B (5min) -> C (5min) -> repeat
+Rotation Logic
+- Content must be within `start_time` and `end_time` to be active.
+- Each content item has a rotation duration in minutes.
+- Rotation repeats continuously within each subject group.
+- Active content is chosen from the current cycle position.
 
-Database Design Decisions
-- MySQL with Sequelize ORM
-- Tables: Users, Contents, ContentSlots, ContentSchedules
-- Foreign keys for relationships
-- Indexes on frequently queried fields (status, subject, uploaded_by)
-- ENUM for status and roles for data integrity
+Database Decisions
+- MySQL with Sequelize ORM.
+- Tables: `Users`, `Contents`, `ContentSlots`, `ContentSchedules`.
+- Relations are modeled with foreign keys.
+- Status and role fields use enums for integrity.
 
-Folder Structure
-- src/controllers: Business logic for auth, content, public APIs
-- src/models: Sequelize models with associations
-- src/routes: Route definitions with middleware
-- src/middlewares: JWT verification, role checking
-- src/services: Scheduling logic
-- src/config: Database configuration
-- uploads/: Local file storage
+Database Configuration
+- `DB_MODE=local` uses local MySQL variables.
+- `DB_MODE=railway` uses Railway MySQL variables.
+- Apps outside Railway, such as Render, should use `MYSQL_PUBLIC_URL`.
+- Apps inside Railway can use `MYSQL_URL`.
 
-Middleware Usage
-- express.json(): Parse JSON bodies
-- verifyToken: JWT authentication
-- checkRole: Role-based access control
-- express.static: Serve uploaded files
+Code Structure
+- `src/controllers`: API business logic.
+- `src/models`: Sequelize models and associations.
+- `src/routes`: Express route definitions.
+- `src/middlewares`: auth and role guards.
+- `src/services`: scheduling logic.
+- `src/config`: database configuration.
 
-Scalability Approach
-- Database indexing for performance
-- Local file storage (can be upgraded to S3)
-- Stateless JWT authentication
-- Separation of concerns with services layer
-- Potential for Redis caching on public API
-- Modular structure for easy extension
+Scalability Notes
+- Database-backed metadata keeps the app stateless.
+- JWT auth avoids server-side sessions.
+- Local uploads can later move to S3 or another object store.
+- Scheduling logic is isolated in a service for easier extension.
+- Redis caching can be added later for the public API.
+
+Deployment Notes
+- Local development uses local MySQL.
+- Production API is deployed on Render.
+- Production MySQL is hosted on Railway.
+- Render connects to Railway through `MYSQL_PUBLIC_URL`.

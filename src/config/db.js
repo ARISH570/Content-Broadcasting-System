@@ -29,10 +29,11 @@ const railwayConfig = {
 
 // Common options for cloud databases (Railway, TiDB, etc.)
 const cloudOptions = {
-  dialect: 'mysql',
+  dialect: "mysql",
   logging: false,
   dialectOptions: {
     ssl: {
+      minVersion: "TLSv1.2",
       rejectUnauthorized: true,
     },
   },

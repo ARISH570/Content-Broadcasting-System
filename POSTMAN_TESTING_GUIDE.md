@@ -41,6 +41,12 @@ Core request flow
   "password": "password123",
   "role": "teacher"
 }
+{
+  "name": "Mary Teacher",
+  "email": "mary@example.com",
+  "password": "password123",
+  "role": "teacher"
+}
 ```
 
 2. Register principal
@@ -49,6 +55,13 @@ Core request flow
 {
   "name": "Jane Principal",
   "email": "jane@example.com",
+  "password": "password123",
+  "role": "principal"
+}
+
+{
+  "name": "isabella Principal",
+  "email": "isabella@example.com",
   "password": "password123",
   "role": "principal"
 }

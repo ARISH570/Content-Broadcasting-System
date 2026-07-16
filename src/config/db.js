@@ -2,12 +2,15 @@ const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
 const dbMode = (process.env.DB_MODE || 'auto').toLowerCase();
+
 const railwayPublicUrl = process.env.MYSQL_PUBLIC_URL;
 const railwayPrivateUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
+
 const databaseUrl =
   dbMode === 'railway'
     ? railwayPublicUrl || railwayPrivateUrl
     : railwayPrivateUrl || railwayPublicUrl;
+
 const localConfig = {
   database: process.env.DB_NAME,
   username: process.env.DB_USER,
@@ -15,6 +18,7 @@ const localConfig = {
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT || 3306),
 };
+
 const railwayConfig = {
   database: process.env.MYSQLDATABASE || process.env.DB_NAME,
   username: process.env.MYSQLUSER || process.env.DB_USER,
@@ -23,39 +27,61 @@ const railwayConfig = {
   port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
 };
 
+// Common options for cloud databases (Railway, TiDB, etc.)
+const cloudOptions = {
+  dialect: 'mysql',
+  logging: false,
+  dialectOptions: {
+    ssl: {
+      rejectUnauthorized: true,
+    },
+  },
+};
+
+const localOptions = {
+  dialect: 'mysql',
+  logging: false,
+};
+
 let sequelize;
 
 if (dbMode === 'railway') {
   sequelize = databaseUrl
-    ? new Sequelize(databaseUrl, {
-        dialect: 'mysql',
-        logging: false,
-      })
-    : new Sequelize(railwayConfig.database, railwayConfig.username, railwayConfig.password, {
+    ? new Sequelize(databaseUrl, cloudOptions)
+    : new Sequelize(
+      railwayConfig.database,
+      railwayConfig.username,
+      railwayConfig.password,
+      {
         host: railwayConfig.host,
         port: railwayConfig.port,
-        dialect: 'mysql',
-        logging: false,
-      });
+        ...cloudOptions,
+      }
+    );
 } else if (dbMode === 'local') {
-  sequelize = new Sequelize(localConfig.database, localConfig.username, localConfig.password, {
-    host: localConfig.host,
-    port: localConfig.port,
-    dialect: 'mysql',
-    logging: false,
-  });
+  sequelize = new Sequelize(
+    localConfig.database,
+    localConfig.username,
+    localConfig.password,
+    {
+      host: localConfig.host,
+      port: localConfig.port,
+      ...localOptions,
+    }
+  );
 } else {
   sequelize = databaseUrl
-    ? new Sequelize(databaseUrl, {
-        dialect: 'mysql',
-        logging: false,
-      })
-    : new Sequelize(railwayConfig.database, railwayConfig.username, railwayConfig.password, {
+    ? new Sequelize(databaseUrl, cloudOptions)
+    : new Sequelize(
+      railwayConfig.database,
+      railwayConfig.username,
+      railwayConfig.password,
+      {
         host: railwayConfig.host,
         port: railwayConfig.port,
-        dialect: 'mysql',
-        logging: false,
-      });
+        ...cloudOptions,
+      }
+    );
 }
 
 module.exports = sequelize;

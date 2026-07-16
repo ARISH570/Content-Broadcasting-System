@@ -1,13 +1,14 @@
-const { Sequelize } = require('sequelize');
-require('dotenv').config();
+const { Sequelize } = require("sequelize");
+const fs = require("fs");
+require("dotenv").config();
 
-const dbMode = (process.env.DB_MODE || 'auto').toLowerCase();
+const dbMode = (process.env.DB_MODE || "auto").toLowerCase();
 
 const railwayPublicUrl = process.env.MYSQL_PUBLIC_URL;
 const railwayPrivateUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
 
 const databaseUrl =
-  dbMode === 'railway'
+  dbMode === "railway"
     ? railwayPublicUrl || railwayPrivateUrl
     : railwayPrivateUrl || railwayPublicUrl;
 
@@ -27,26 +28,26 @@ const railwayConfig = {
   port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
 };
 
-// Common options for cloud databases (Railway, TiDB, etc.)
+// Common options for cloud databases (TiDB/Railway)
 const cloudOptions = {
   dialect: "mysql",
   logging: false,
   dialectOptions: {
     ssl: {
-      minVersion: "TLSv1.2",
+      ca: fs.readFileSync("/etc/ssl/cert.pem"),
       rejectUnauthorized: true,
     },
   },
 };
 
 const localOptions = {
-  dialect: 'mysql',
+  dialect: "mysql",
   logging: false,
 };
 
 let sequelize;
 
-if (dbMode === 'railway') {
+if (dbMode === "railway") {
   sequelize = databaseUrl
     ? new Sequelize(databaseUrl, cloudOptions)
     : new Sequelize(
@@ -59,7 +60,7 @@ if (dbMode === 'railway') {
         ...cloudOptions,
       }
     );
-} else if (dbMode === 'local') {
+} else if (dbMode === "local") {
   sequelize = new Sequelize(
     localConfig.database,
     localConfig.username,

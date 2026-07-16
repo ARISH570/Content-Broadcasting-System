@@ -34,8 +34,8 @@ const cloudOptions = {
   logging: false,
   dialectOptions: {
     ssl: {
-      ca: fs.readFileSync("/etc/ssl/cert.pem"),
-      rejectUnauthorized: true,
+      minVersion: "TLSv1.2",
+      rejectUnauthorized: false,
     },
   },
 };
